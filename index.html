@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Quest: Balloon Archer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; overflow: hidden; background: #cce7ff; }
+        .panel-glass { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,0.5); }
+        
+        /* Forest Background Styles */
+        .sky { background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%); position: absolute; inset: 0; z-index: 0; }
+        .mountain { position: absolute; bottom: 80px; fill: #6db1cf; opacity: 0.6; z-index: 1; }
+        .forest-floor { position: absolute; bottom: 0; width: 100%; height: 120px; background: #2d5a27; z-index: 10; border-top: 8px solid #3d7a35; }
+        
+        .balloon { transition: transform 0.05s linear; cursor: default; }
+        
+        /* Worm & Coin Animations */
+        .worm-drop { animation: fall 0.8s ease-in forwards; pointer-events: none; }
+        @keyframes fall { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(400px) rotate(360deg); opacity: 0; } }
+        
+        #aim-line { stroke-dasharray: 8, 8; animation: dash 1s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -16; } }
+
+        .vibrate { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-5px,0); } 75% { transform: translate(5px,0); } }
+    </style>
+</head>
+<body class="h-screen w-screen m-0 p-0 flex items-center justify-center">
+
+    <!-- Background Layer -->
+    <div class="sky">
+        <!-- Mountains SVG -->
+        <svg class="mountain" width="100%" height="300" viewBox="0 0 1000 300" preserveAspectRatio="none">
+            <path d="M0,300 L200,100 L400,250 L600,50 L850,280 L1000,300 Z" />
+        </svg>
+        <!-- Clouds -->
+        <div class="absolute top-20 left-10 text-white opacity-40 text-4xl"><i class="fa-solid fa-cloud"></i></div>
+        <div class="absolute top-40 right-40 text-white opacity-30 text-6xl"><i class="fa-solid fa-cloud"></i></div>
+    </div>
+    <div class="forest-floor"></div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-blue-600/90 text-white p-6">
+        <div class="text-6xl mb-4"><i class="fa-solid fa-bow-arrow text-yellow-300"></i></div>
+        <h1 class="text-6xl font-black mb-2 drop-shadow-2xl text-center">Health Quest</h1>
+        <p class="text-2xl mb-10 font-light tracking-widest uppercase">Balloon Archer Edition</p>
+        
+        <div class="panel-glass text-blue-900 p-8 rounded-[2rem] mb-10 max-w-lg shadow-2xl">
+            <h3 class="font-bold text-xl mb-4 text-center border-b pb-2">วิธีเล่น</h3>
+            <ul class="space-y-3 text-lg">
+                <li class="flex items-center"><i class="fa-solid fa-crosshairs mr-3 text-red-500"></i> คลิกค้างแล้วลากเพื่อเล็งเป้าหมาย</li>
+                <li class="flex items-center"><i class="fa-solid fa-bullseye mr-3 text-blue-500"></i> ปล่อยเพื่อยิงลูกโป่งคำตอบที่ถูก</li>
+                <li class="flex items-center"><i class="fa-solid fa-coins mr-3 text-yellow-600"></i> สะสมเหรียญตามความยากของคำถาม</li>
+            </ul>
+        </div>
+
+        <button id="btn-start" class="bg-yellow-400 hover:bg-yellow-500 text-blue-900 text-4xl font-black py-5 px-16 rounded-full shadow-[0_10px_0_0_#b8860b] transition-all transform hover:-translate-y-1 active:translate-y-1 active:shadow-none">
+            START GAME
+        </button>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud-top" class="fixed top-0 left-0 right-0 p-6 flex justify-between items-start z-50 hidden">
+        <div class="flex gap-4">
+            <div class="panel-glass px-6 py-3 rounded-2xl shadow-xl flex items-center">
+                <i class="fa-solid fa-coins text-yellow-500 mr-3 text-2xl"></i>
+                <span id="coin-count" class="text-3xl font-black text-gray-800 tracking-tight">0</span>
+            </div>
+            <div class="panel-glass px-6 py-3 rounded-2xl shadow-xl flex items-center">
+                <i class="fa-solid fa-bullseye text-blue-500 mr-3 text-2xl"></i>
+                <span id="progress" class="text-3xl font-black text-gray-800 tracking-tight">0/40</span>
+            </div>
+        </div>
+        <div class="panel-glass px-6 py-3 rounded-2xl shadow-xl flex items-center border-b-4 border-red-500">
+            <i class="fa-solid fa-clock text-red-500 mr-3 text-2xl"></i>
+            <span id="total-timer" class="text-3xl font-black text-gray-800">30:00</span>
+        </div>
+    </div>
+
+    <!-- Game Content -->
+    <main id="game-container" class="relative w-full h-full overflow-hidden hidden">
+        
+        <!-- Question Panel (Left - Static) -->
+        <aside id="question-panel" class="absolute left-6 top-24 bottom-32 w-80 panel-glass rounded-[2.5rem] p-8 shadow-2xl z-40 flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <span class="bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg">ข้อที่ <span id="q-num">1</span></span>
+                <div class="text-red-600 font-black text-2xl" id="q-timer-box">
+                    <span id="q-timer">20</span>s
+                </div>
+            </div>
+            <div class="flex-grow flex flex-col justify-center">
+                <h2 id="question-text" class="text-2xl font-bold text-blue-900 leading-tight mb-8">
+                    กำลังเตรียมคำถาม...
+                </h2>
+            </div>
+            <div class="pt-6 border-t-2 border-dashed border-blue-200">
+                <span class="text-sm font-bold text-blue-400 uppercase tracking-widest">Difficulty</span>
+                <div id="stars" class="text-yellow-500 text-xl flex gap-1 mt-1"></div>
+            </div>
+        </aside>
+
+        <!-- Balloon Arena (Right of Question Panel) -->
+        <div id="balloon-area" class="absolute top-0 bottom-0 right-0 z-20 pointer-events-none" style="left: 360px;">
+            <!-- Balloons will spawn here -->
+        </div>
+
+        <!-- Archer (Janjao) -->
+        <div id="char-container" class="absolute bottom-10 left-[60%] -translate-x-1/2 z-30 flex flex-col items-center">
+            <div id="worm-spot" class="absolute -top-16 flex justify-center w-full"></div>
+            
+            <!-- Character SVG -->
+            <svg id="character" width="140" height="160" viewBox="0 0 120 150">
+                <path d="M30,45 Q20,100 30,140 M90,45 Q100,100 90,140" stroke="#4b2c20" stroke-width="12" stroke-linecap="round" fill="none" />
+                <rect x="35" y="70" width="50" height="60" rx="10" fill="#2563eb" />
+                <rect x="35" y="110" width="50" height="20" fill="#1e40af" />
+                <circle cx="60" cy="45" r="30" fill="#ffdbac" />
+                <g id="eyes">
+                    <circle cx="50" cy="45" r="3" fill="#000" />
+                    <circle cx="70" cy="45" r="3" fill="#000" />
+                </g>
+                <path id="mouth" d="M50,55 Q60,65 70,55" stroke="#000" stroke-width="2" fill="none" />
+                
+                <!-- Bow System (Dynamic) -->
+                <g id="bow-group" transform="translate(60, 90)">
+                    <!-- Bow Body -->
+                    <path id="bow-wood" d="M-40,-50 Q-60,0 -40,50" stroke="#8B4513" stroke-width="6" fill="none" stroke-linecap="round" />
+                    <!-- Bow String -->
+                    <path id="bow-string" d="M-40,-50 L-40,50" stroke="#FFF" stroke-width="2" fill="none" />
+                    <!-- Arrow in Bow -->
+                    <line id="arrow-ready" x1="-40" y1="0" x2="20" y2="0" stroke="#333" stroke-width="4" stroke-linecap="round" style="display:none;"/>
+                </g>
+            </svg>
+            
+            <!-- Drag Overlay -->
+            <div id="drag-zone" class="absolute inset-0 w-full h-full cursor-crosshair"></div>
+        </div>
+
+        <!-- VFX Layer -->
+        <div id="fx-layer" class="absolute inset-0 z-50 pointer-events-none"></div>
+
+        <!-- Coin Jar -->
+        <div class="fixed bottom-6 left-6 z-50">
+            <div id="coin-jar" class="relative w-36 h-44 bg-white/20 backdrop-blur-md border-b-8 border-x-4 border-white/50 rounded-b-[2rem] shadow-2xl flex flex-wrap-reverse items-start p-3 gap-1 overflow-hidden">
+                <div class="absolute inset-0 bg-blue-400/10 pointer-events-none"></div>
+            </div>
+            <div class="text-center font-black text-blue-900 text-lg mt-2 drop-shadow-md">GOLD POT</div>
+        </div>
+
+    </main>
+
+    <!-- Overlay Popups (Time/Game Over) -->
+    <div id="time-warning" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="panel-glass p-10 rounded-[3rem] max-w-sm text-center shadow-2xl">
+            <div class="text-6xl text-red-500 mb-4"><i class="fa-solid fa-hourglass-end"></i></div>
+            <h2 class="text-3xl font-black text-red-600 mb-2">ใกล้หมดเวลา!</h2>
+            <p class="text-gray-600 mb-8">ใช้เหรียญทองเพื่อต่อเวลาไหม?</p>
+            <div class="flex flex-col gap-4">
+                <button id="btn-buy-time" class="bg-green-500 text-white font-black py-4 rounded-2xl text-xl hover:bg-green-600 shadow-lg">3 <i class="fa-solid fa-coins"></i> = +1 นาที</button>
+                <button id="btn-skip-warning" class="text-gray-400 font-bold hover:text-gray-600">ข้ามไปก่อน</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-over" class="fixed inset-0 z-[2000] flex items-center justify-center bg-blue-900/95 hidden">
+        <div class="bg-white p-12 rounded-[4rem] text-center shadow-2xl max-w-lg w-full">
+            <h1 id="result-title" class="text-5xl font-black text-blue-900 mb-6">สรุปผลการเล่น</h1>
+            <div class="grid grid-cols-2 gap-6 mb-10">
+                <div class="bg-blue-50 p-6 rounded-3xl">
+                    <div class="text-gray-400 text-sm font-bold uppercase mb-1">ตอบถูก</div>
+                    <div id="result-correct" class="text-5xl font-black text-blue-600">0/40</div>
+                </div>
+                <div class="bg-yellow-50 p-6 rounded-3xl">
+                    <div class="text-gray-400 text-sm font-bold uppercase mb-1">เหรียญทอง</div>
+                    <div id="result-coins" class="text-5xl font-black text-yellow-500">0</div>
+                </div>
+            </div>
+            <p id="result-rank" class="text-2xl font-bold mb-10 text-gray-700 bg-gray-100 py-3 rounded-full">"นักแม่นธนูฝึกหัด"</p>
+            <button onclick="location.reload()" class="bg-blue-600 text-white font-black py-5 px-12 rounded-full text-2xl hover:bg-blue-700 shadow-xl active:scale-95 transition-all">
+                PLAY AGAIN
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Audio System ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            if(type === 'pop') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if(type === 'coin') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if(type === 'fail') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // --- 2. Questions ---
+        const questions = [
+            { q: "สารเสพติดหมายถึงสิ่งใด?", options: ["อาหารเสริม", "ยา/สารเคมีที่ส่งผลต่อกายและจิต", "น้ำสมุนไพรบำรุง", "วิตามิน"], correct: 1, difficulty: 2 },
+            { q: "อาการ 'ลงแดง' คือลักษณะใด?", options: ["ผิวหนังเป็นสีแดง", "ความดันสูง", "ทุรนทุรายเมื่อขาดสารเสพติด", "หัวใจหยุดเต้น"], correct: 2, difficulty: 5 },
+            { q: "สารเสพติดธรรมชาติคือข้อใด?", options: ["ยาบ้า", "กาว", "กัญชา ฝิ่น", "ทินเนอร์"], correct: 2, difficulty: 3 },
+            { q: "ข้อใดคืออาการ 'สมองติดยา'?", options: ["สมองใหญ่ขึ้น", "โดปามีนหลั่งจนคุมความอยากไม่ได้", "จำแม่นขึ้น", "คิดเลขเร็ว"], correct: 1, difficulty: 8 },
+            { q: "ถ้าเพื่อนชวนลองสูบบุหรี่ ควรตอบอย่างไร?", options: ["ไว้คราวหน้า", "ลองนิดเดียวไม่เป็นไร", "สัญญาให้แม่ไว้ว่าจะไม่สูบ", "ถ้ามีหมากฝรั่งค่อยสูบ"], correct: 2, difficulty: 10 },
+            { q: "นิโคติน ส่งผลอย่างไรต่อร่างกาย?", options: ["กระดูกแข็งแรง", "ความดันสูงและหลอดเลือดหดตัว", "ช่วยให้สายตาดี", "แก้ปวดท้อง"], correct: 1, difficulty: 6 },
+            { q: "สาร 'ทาร์' ในบุหรี่ทำให้เกิดโรคใด?", options: ["เบาหวาน", "มะเร็งปอด", "ตับแข็ง", "ท้องร่วง"], correct: 1, difficulty: 5 },
+            { q: "ก๊าซในควันบุหรี่ที่แย่งที่ออกซิเจนคือ?", options: ["ไนโตรเจน", "ฮีเลียม", "คาร์บอนมอนอกไซด์", "อาร์กอน"], correct: 2, difficulty: 7 },
+            { q: "สุราออกฤทธิ์ต่อระบบประสาทอย่างไร?", options: ["กระตุ้นประสาท", "กดประสาทส่วนกลาง", "หลอนประสาท", "บำรุงประสาท"], correct: 1, difficulty: 4 },
+            { q: "โรคตับแข็ง มักเกิดจากการเสพสิ่งใด?", options: ["บุหรี่", "กาแฟ", "สุรา", "ยาบ้า"], correct: 2, difficulty: 5 },
+            { q: "ยาบ้า มีชื่อเรียกทางเคมีว่าอะไร?", options: ["มอร์ฟีน", "แอมเฟตามีน", "นิโคติน", "เอทานอล"], correct: 1, difficulty: 4 },
+            { q: "สารระเหย มักพบในผลิตภัณฑ์ใด?", options: ["ทินเนอร์ แล็กเกอร์", "น้ำอัดลม", "แป้งฝุ่น", "สบู่"], correct: 0, difficulty: 3 },
+            { q: "เฮโรอีน จัดเป็นสารเสพติดประเภทใด?", options: ["ประเภทที่ 1 ร้ายแรง", "ประเภทที่ 3 ยาแก้ไอ", "ประเภทที่ 5 กัญชา", "สมุนไพร"], correct: 0, difficulty: 9 },
+            { q: "ควันบุหรี่มือสอง คืออะไร?", options: ["ควันจากโรงงาน", "ควันจากธูป", "ควันที่มีผู้อื่นพ่นออกมา", "ควันจืด"], correct: 2, difficulty: 4 },
+            { q: "วันงดสูบบุหรี่โลกคือวันที่เท่าไหร่?", options: ["1 มกราคม", "31 พฤษภาคม", "12 สิงหาคม", "5 ธันวาคม"], correct: 1, difficulty: 6 },
+            { q: "ทักษะชีวิต (Life Skills) สำคัญอย่างไร?", options: ["เล่นกีฬาเก่ง", "ช่วยแก้ปัญหาและจัดการสถานการณ์เสี่ยง", "สอบได้ที่ 1", "รวย"], correct: 1, difficulty: 7 },
+            { q: "ทักษะการปฏิเสธที่ดีควรเป็นอย่างไร?", options: ["โกรธเพื่อน", "เงียบ", "จริงจัง สุภาพ มีเหตุผล", "ลองไปก่อน"], correct: 2, difficulty: 8 },
+            { q: "นโยบาย 'ผู้เสพคือผู้ป่วย' หมายถึงสิ่งใด?", options: ["นอน รพ. ตลอดชีวิต", "เน้นบำบัดรักษามากกว่าลงโทษ", "เสพยาใน รพ. ได้", "ห้ามรักษาคนติดยา"], correct: 1, difficulty: 9 },
+            { q: "โครงการ To Be Number One มุ่งเน้นอะไร?", options: ["ที่หนึ่งในการสอบ", "รณรงค์ต้านยาเสพติดเยาวชน", "แข่งวิ่ง", "ขายน้ำ"], correct: 1, difficulty: 6 },
+            { q: "หากพบคนค้าสารเสพติดในชุมชนควรทำอย่างไร?", options: ["จับเอง", "เฉยไว้กลัว", "แจ้งเจ้าหน้าที่/ตำรวจ", "ขอส่วนแบ่ง"], correct: 2, difficulty: 5 },
+            { q: "เห็ดขี้ควาย ออกฤทธิ์แบบใด?", options: ["กดประสาท", "กระตุ้นประสาท", "หลอนประสาท", "ผสมผสาน"], correct: 2, difficulty: 8 },
+            { q: "การใช้เข็มร่วมกันเสี่ยงต่อโรคใดมากที่สุด?", options: ["เอดส์ (HIV)", "เบาหวาน", "ไข้หวัดใหญ่", "ตาแดง"], correct: 0, difficulty: 7 },
+            { q: "กาวและแล็กเกอร์ ทำลายอวัยวะใดรุนแรง?", options: ["สมองและปอด", "นิ้วมือ", "หู", "ผม"], correct: 0, difficulty: 6 },
+            { q: "การตัดสินใจที่ดีควรเริ่มจากสิ่งใด?", options: ["ถามเพื่อน", "ใช้เหตุผลวิเคราะห์ข้อดีข้อเสีย", "เสี่ยงดวง", "ทำตามดารา"], correct: 1, difficulty: 8 },
+            { q: "สถาบันใดเป็นรากฐานสำคัญในการป้องกันยาเสพติด?", options: ["ครอบครัว", "การเมือง", "การเงิน", "ห้างสรรพสินค้า"], correct: 0, difficulty: 5 },
+            { q: "อาการ 'ตื่นตัวตลอดเวลา ใจสั่น' เป็นผลจากสิ่งใด?", options: ["ยานอนหลับ", "สุรา", "ยาบ้า", "ฝิ่น"], correct: 2, difficulty: 6 },
+            { q: "เมื่อเพื่อนมีปัญหาความเครียด เราควรทำอย่างไร?", options: ["ชวนเสพยา", "ให้กำลังใจและรับฟัง", "ล้อเลียน", "เดินหนี"], correct: 1, difficulty: 7 },
+            { q: "ข้อใดคือการสร้างครอบครัวอบอุ่น?", options: ["ไม่พูดกัน", "ให้เงินเยอะๆ", "พูดคุยและรับฟังกัน", "ตามใจทุกเรื่อง"], correct: 2, difficulty: 5 },
+            { q: "โดปามีน สัมพันธ์กับยาเสพติดอย่างไร?", options: ["ยาแก้ปวด", "สารสื่อประสาทแห่งความสุข", "ก๊าซพิษ", "ชื่อยี่ห้อบุหรี่"], correct: 1, difficulty: 9 },
+            { q: "อาการหูอื้อ ตาลาย เสียการทรงตัว เกิดจาก?", options: ["ออกกำลังกาย", "ดื่มสุรา", "อ่านหนังสือมาก", "อาบน้ำนาน"], correct: 1, difficulty: 4 },
+            { q: "หากถูกรบเร้าให้เสพยาซ้ำๆ ควรทำอย่างไร?", options: ["ยอมเพื่อน", "เดินหนีโดยเร็ว", "ท้าชก", "ลองนิดเดียว"], correct: 1, difficulty: 7 },
+            { q: "มอร์ฟีน สกัดมาจากพืชชนิดใด?", options: ["กัญชา", "ฝิ่น", "กระท่อม", "ยาสูบ"], correct: 1, difficulty: 7 },
+            { q: "สารเสพติดประเภทที่ 4 คือข้อใด?", options: ["เฮโรอีน", "สารเคมีใช้ผลิตยาเสพติด", "กัญชา", "ยาบ้า"], correct: 1, difficulty: 10 },
+            { q: "ยาเลิฟ ยาอี ส่งผลเสียอย่างไร?", options: ["เรียนเก่ง", "ทำลายภูมิคุ้มกันร่างกาย", "นอนหลับดี", "แข็งแรง"], correct: 1, difficulty: 8 },
+            { q: "การให้กำลังใจผู้อื่นเลิกยาเสพติดคือทักษะใด?", options: ["การตัดสินใจ", "การให้กำลังใจ", "การแก้ปัญหา", "การวิเคราะห์"], correct: 1, difficulty: 5 },
+            { q: "ความรับผิดชอบต่อสังคมช่วยป้องกันยาเสพติดอย่างไร?", options: ["ชุมชนเข้มแข็ง", "บ้านสวย", "ขายของเก่ง", "คนกลัว"], correct: 0, difficulty: 7 },
+            { q: "การกำหนดปัญหาที่แท้จริง อยู่ในกระบวนการใด?", options: ["การให้เหรียญ", "การตัดสินใจและแก้ปัญหา", "การเต้น", "การกิน"], correct: 1, difficulty: 9 },
+            { q: "เมาแล้วขับ ถูกลงโทษอย่างไร?", options: ["ได้รับรางวัล", "ถูกคุมประพฤติ/บริการสังคม", "ห้ามออกจากบ้าน", "ไม่มีความผิด"], correct: 1, difficulty: 6 },
+            { q: "ลักษณะอาการ 'หาว น้ำมูกไหล คลุ้มคลั่ง' คือ?", options: ["เป็นหวัด", "อาการอยากยา/ลงแดง", "หิวน้ำ", "ง่วงปกติ"], correct: 1, difficulty: 6 },
+            { q: "การมีจิตสาธารณะช่วยต้านยาเสพติดได้อย่างไร?", options: ["รวย", "สร้างสังคมดี/ใช้เวลาว่างเป็นประโยชน์", "ผมยาว", "เห็นผี"], correct: 1, difficulty: 7 }
+        ];
+
+        // --- 3. Game Engine Variables ---
+        let currentQIndex = 0;
+        let coins = 0;
+        let totalTime = 30 * 60;
+        let qTimeLeft = 20;
+        let balloons = [];
+        let unansweredIndices = [];
+        let isAiming = false;
+        let startAimPos = { x: 0, y: 0 };
+        let currentAimPos = { x: 0, y: 0 };
+        let timerInterval, totalTimerInterval;
+
+        const char = document.getElementById('character');
+        const bowGroup = document.getElementById('bow-group');
+        const bowString = document.getElementById('bow-string');
+        const bowWood = document.getElementById('bow-wood');
+        const arrowReady = document.getElementById('arrow-ready');
+        const balloonArea = document.getElementById('balloon-area');
+        const fxLayer = document.getElementById('fx-layer');
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('hud-top').classList.remove('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+            unansweredIndices = Array.from({length: questions.length}, (_, i) => i);
+            loadQuestion();
+            startTotalTimer();
+        }
+
+        function startTotalTimer() {
+            totalTimerInterval = setInterval(() => {
+                totalTime--;
+                const m = Math.floor(totalTime / 60);
+                const s = totalTime % 60;
+                document.getElementById('total-timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                if(totalTime === 30) document.getElementById('time-warning').classList.remove('hidden');
+                if(totalTime <= 0) endGame("TIME'S UP!");
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            clearInterval(timerInterval);
+            if(unansweredIndices.length === 0) { endGame("WINNER!"); return; }
+
+            const qData = questions[unansweredIndices[currentQIndex]];
+            document.getElementById('q-num').innerText = questions.length - unansweredIndices.length + 1;
+            document.getElementById('question-text').innerText = qData.q;
+            document.getElementById('progress').innerText = `${questions.length - unansweredIndices.length}/40`;
+            
+            const stars = document.getElementById('stars');
+            stars.innerHTML = '';
+            for(let i=0; i<5; i++) stars.innerHTML += `<i class="fa-solid fa-star ${i < Math.ceil(qData.difficulty/2) ? 'text-yellow-500' : 'text-gray-200'}"></i>`;
+
+            qTimeLeft = 20;
+            document.getElementById('q-timer').innerText = qTimeLeft;
+            timerInterval = setInterval(() => {
+                qTimeLeft--;
+                document.getElementById('q-timer').innerText = qTimeLeft;
+                if(qTimeLeft <= 0) nextQuestion(true);
+            }, 1000);
+
+            spawnBalloons(qData);
+            document.getElementById('mouth').setAttribute('d', 'M50,55 Q60,65 70,55');
+        }
+
+        function spawnBalloons(qData) {
+            balloonArea.innerHTML = '';
+            balloons = [];
+            const colors = ['#ff4d4d', '#4d94ff', '#ffcc00', '#33cc33'];
+            const labels = ['ก', 'ข', 'ค', 'ง'];
+            const areaWidth = window.innerWidth - 380;
+
+            qData.options.forEach((opt, i) => {
+                const b = document.createElement('div');
+                b.className = 'balloon absolute w-24 h-32 rounded-full shadow-2xl flex flex-col items-center justify-center p-3 text-white font-bold text-sm text-center border-b-[10px] border-black/10';
+                b.style.backgroundColor = colors[i];
+                b.innerHTML = `<span class="text-xl opacity-60 mb-1">${labels[i]}</span><span class="leading-tight">${opt}</span>`;
+                
+                const state = {
+                    el: b,
+                    x: Math.random() * (areaWidth - 100),
+                    y: 50 + Math.random() * 250,
+                    vx: (Math.random() - 0.5) * 1.8,
+                    vy: (Math.random() - 0.5) * 1.8,
+                    isCorrect: i === qData.correct,
+                    radius: 48 // Approx half of width (24*4=96)
+                };
+                
+                balloonArea.appendChild(b);
+                balloons.push(state);
+            });
+        }
+
+        function update() {
+            const areaWidth = window.innerWidth - 400;
+
+            for (let i = 0; i < balloons.length; i++) {
+                let b1 = balloons[i];
+                b1.x += b1.vx;
+                b1.y += b1.vy;
+
+                // Wall bounce
+                if(b1.x <= 0 || b1.x >= areaWidth) b1.vx *= -1;
+                if(b1.y <= 0 || b1.y >= 450) b1.vy *= -1;
+
+                // Balloon collision bounce
+                for (let j = i + 1; j < balloons.length; j++) {
+                    let b2 = balloons[j];
+                    const dx = (b1.x) - (b2.x);
+                    const dy = (b1.y) - (b2.y);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDistance = 90; // Approx sum of radii
+
+                    if (distance < minDistance) {
+                        // Elastic collision - swap velocities simplified
+                        const tempVx = b1.vx;
+                        const tempVy = b1.vy;
+                        b1.vx = b2.vx;
+                        b1.vy = b2.vy;
+                        b2.vx = tempVx;
+                        b2.vy = tempVy;
+
+                        // Resolve overlap to prevent sticking
+                        const overlap = minDistance - distance;
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+                        b1.x += nx * overlap / 2;
+                        b1.y += ny * overlap / 2;
+                        b2.x -= nx * overlap / 2;
+                        b2.y -= ny * overlap / 2;
+                    }
+                }
+
+                b1.el.style.transform = `translate(${b1.x}px, ${b1.y}px)`;
+            }
+            requestAnimationFrame(update);
+        }
+        update();
+
+        window.addEventListener('mousedown', (e) => startAim(e));
+        window.addEventListener('mousemove', (e) => doAim(e));
+        window.addEventListener('mouseup', (e) => endAim(e));
+        window.addEventListener('touchstart', (e) => startAim(e.touches[0]));
+        window.addEventListener('touchmove', (e) => doAim(e.touches[0]));
+        window.addEventListener('touchend', (e) => endAim(e.touches[0]));
+
+        function startAim(e) {
+            if(document.getElementById('game-container').classList.contains('hidden')) return;
+            isAiming = true;
+            startAimPos = { x: e.clientX, y: e.clientY };
+            arrowReady.style.display = 'block';
+        }
+
+        function doAim(e) {
+            if(!isAiming) return;
+            currentAimPos = { x: e.clientX, y: e.clientY };
+            
+            const dx = startAimPos.x - currentAimPos.x;
+            const dy = startAimPos.y - currentAimPos.y;
+            const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 100);
+            const angle = Math.atan2(dy, dx);
+
+            bowGroup.setAttribute('transform', `translate(60, 90) rotate(${angle * 180 / Math.PI})`);
+            bowString.setAttribute('d', `M-40,-50 L${-40 - dist/2},0 L-40,50`);
+            bowWood.setAttribute('d', `M-40,-50 Q${-60 - dist/4},0 -40,50`);
+            arrowReady.setAttribute('x1', `${-40 - dist/2}`);
+            arrowReady.setAttribute('x2', `${20 - dist/2}`);
+        }
+
+        function endAim(e) {
+            if(!isAiming) return;
+            isAiming = false;
+            arrowReady.style.display = 'none';
+            bowString.setAttribute('d', `M-40,-50 L-40,50`);
+            bowWood.setAttribute('d', `M-40,-50 Q-60,0 -40,50`);
+
+            const dx = startAimPos.x - currentAimPos.x;
+            const dy = startAimPos.y - currentAimPos.y;
+            const power = Math.min(Math.sqrt(dx*dx + dy*dy), 100) / 6;
+            const angle = Math.atan2(dy, dx);
+
+            if(power > 2) fireArrow(angle, power);
+        }
+
+        function fireArrow(angle, power) {
+            const arrow = document.createElement('div');
+            arrow.className = 'absolute w-12 h-1 bg-stone-800 z-50 rounded-full';
+            const rect = bowGroup.getBoundingClientRect();
+            let ax = rect.left + rect.width/2;
+            let ay = rect.top + rect.height/2;
+            fxLayer.appendChild(arrow);
+
+            let vx = Math.cos(angle) * power * 1.5;
+            let vy = Math.sin(angle) * power * 1.5;
+
+            function anim() {
+                ax += vx; ay += vy; vy += 0.05;
+                arrow.style.left = `${ax}px`;
+                arrow.style.top = `${ay}px`;
+                arrow.style.transform = `rotate(${Math.atan2(vy, vx)}rad)`;
+
+                let hit = false;
+                balloons.forEach(b => {
+                    const rectB = b.el.getBoundingClientRect();
+                    if(ax > rectB.left && ax < rectB.right && ay > rectB.top && ay < rectB.bottom && !hit) {
+                        hit = true; arrow.remove(); onHit(b);
+                    }
+                });
+
+                if(!hit && ax > 0 && ax < window.innerWidth && ay < window.innerHeight) requestAnimationFrame(anim);
+                else arrow.remove();
+            }
+            anim();
+        }
+
+        function onHit(b) {
+            playSound('pop');
+            b.el.remove();
+            if(b.isCorrect) {
+                const qData = questions[unansweredIndices[currentQIndex]];
+                coins += qData.difficulty;
+                document.getElementById('coin-count').innerText = coins;
+                for(let i=0; i<qData.difficulty; i++) setTimeout(addCoinToJar, i*100);
+                unansweredIndices.splice(currentQIndex, 1);
+                currentQIndex = currentQIndex % unansweredIndices.length;
+                setTimeout(loadQuestion, 800);
+            } else {
+                playSound('fail');
+                char.classList.add('vibrate');
+                setTimeout(() => char.classList.remove('vibrate'), 500);
+                document.getElementById('mouth').setAttribute('d', 'M50,65 Q60,55 70,65');
+                const worm = document.createElement('div');
+                worm.className = 'text-5xl worm-drop absolute';
+                worm.innerText = '🐛';
+                document.getElementById('worm-spot').appendChild(worm);
+                setTimeout(() => worm.remove(), 1000);
+            }
+            balloons = balloons.filter(x => x !== b);
+        }
+
+        function addCoinToJar() {
+            playSound('coin');
+            const c = document.createElement('div');
+            c.className = 'w-5 h-5 bg-yellow-400 rounded-full border-2 border-yellow-600 shadow-sm animate-bounce';
+            document.getElementById('coin-jar').appendChild(c);
+        }
+
+        function nextQuestion(timeout) {
+            if(timeout) currentQIndex = (currentQIndex + 1) % unansweredIndices.length;
+            loadQuestion();
+        }
+
+        function endGame(title) {
+            clearInterval(timerInterval); clearInterval(totalTimerInterval);
+            document.getElementById('game-over').classList.remove('hidden');
+            document.getElementById('result-title').innerText = title;
+            const score = questions.length - unansweredIndices.length;
+            document.getElementById('result-correct').innerText = `${score}/40`;
+            document.getElementById('result-coins').innerText = coins;
+            let rank = "ฝึกหัด";
+            if(score > 35) rank = "ราชินีธนูพิชิตภัยยาเสพติด";
+            else if(score > 20) rank = "นักแม่นธนูมืออาชีพ";
+            document.getElementById('result-rank').innerText = `"${rank}"`;
+        }
+
+        document.getElementById('btn-buy-time').onclick = () => {
+            if(coins >= 3) { 
+                coins -= 3; totalTime += 60; 
+                document.getElementById('coin-count').innerText = coins;
+                document.getElementById('time-warning').classList.add('hidden');
+            }
+        };
+        document.getElementById('btn-skip-warning').onclick = () => document.getElementById('time-warning').classList.add('hidden');
+        document.getElementById('btn-start').onclick = startGame;
+
+    </script>
+</body>
+</html>
