@@ -3,48 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Health Quest: Balloon Archer (Insane & Slim UI)</title>
+    <title>Health Quest: Balloon Archer (Leaderboard Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* ล็อกหน้าจอถาวร ป้องกันการเลื่อนลงบนมือถือขณะลากนิ้ว */
+        /* Strict Scroll Lock for Mobile UX */
         html, body { 
-            position: fixed; 
-            width: 100%; 
-            height: 100%; 
-            overflow: hidden; 
-            margin: 0; 
-            padding: 0; 
-            touch-action: none; 
-            -webkit-user-select: none; 
-            user-select: none; 
-            overscroll-behavior: none;
+            position: fixed; width: 100%; height: 100%; overflow: hidden; 
+            margin: 0; padding: 0; touch-action: none; -webkit-user-select: none; 
+            user-select: none; overscroll-behavior: none;
         }
         body { font-family: 'Kanit', sans-serif; background: #cce7ff; }
-        .panel-glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .panel-glass { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
         
         .sky { background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%); position: absolute; inset: 0; z-index: 0; }
         .mountain { position: absolute; bottom: 80px; fill: #6db1cf; opacity: 0.5; z-index: 1; }
         .forest-floor { position: absolute; bottom: 0; width: 100%; height: 60px; background: #2d5a27; z-index: 10; border-top: 4px solid #3d7a35; }
         
-        /* วัตถุในเกม */
         .balloon { transition: transform 0.05s linear; cursor: default; touch-action: none; pointer-events: none; }
         .worm-drop { animation: fall 0.8s ease-in forwards; pointer-events: none; position: absolute; z-index: 100; }
         @keyframes fall { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(600px) rotate(360deg); opacity: 0; } }
         
         .vibrate { animation: shake 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-4px,0); } 75% { transform: translate(4px,0); } }
+        @keyframes shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-5px,0); } 75% { transform: translate(5px,0); } }
 
-        /* Mobile Adjustments: กล่องคำถามแบบ Ultra Slim */
+        /* Mobile Question UI: Ultra Slim & Compact */
         @media (max-width: 768px) {
             #question-panel { 
-                left: 8px !important; right: 8px !important; top: 48px !important; 
-                width: auto !important; height: auto !important; max-height: 15vh !important; 
+                left: 10px !important; right: 10px !important; top: 45px !important; 
+                width: auto !important; height: auto !important; max-height: 16vh !important; 
                 padding: 8px 12px !important; border-radius: 12px !important;
-                background: rgba(255, 255, 255, 0.8) !important;
+                background: rgba(255, 255, 255, 0.85) !important;
             }
-            #question-text { font-size: 13px !important; line-height: 1.2 !important; font-weight: 600 !important; }
+            #question-text { font-size: 13px !important; line-height: 1.1 !important; margin-bottom: 4px !important; }
             #char-container { transform: scale(0.55) translateX(-50%); left: 50%; bottom: 0px; }
             .balloon { width: 60px !important; height: 80px !important; }
             #hud-top { padding: 4px 8px !important; }
@@ -62,21 +54,25 @@
     </div>
     <div class="forest-floor"></div>
 
-    <!-- Start Screen -->
+    <!-- Start Screen: Name Input & Instructions -->
     <div id="start-screen" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-blue-600/98 text-white p-6 text-center">
         <div class="text-7xl mb-4 animate-bounce text-yellow-300"><i class="fa-solid fa-feather-pointed"></i></div>
-        <h1 class="text-5xl font-black mb-2">Health Quest</h1>
-        <p class="text-xl mb-4 font-light tracking-widest text-yellow-200 uppercase">SUPER CHALLENGE: 6 MINS / 20 Qs</p>
-        <div class="panel-glass text-blue-900 p-6 rounded-3xl mb-8 max-w-sm shadow-2xl text-left">
-            <p class="font-bold mb-3 text-center text-lg text-red-600 underline">โหมดเตรียมสอบปลายภาค</p>
-            <ul class="text-sm space-y-2">
-                <li>⏱️ **เวลา:** 6 นาที (สุ่ม 20 ข้อ จากคลัง 60 ข้อ)</li>
-                <li>💰 **Speed Score:** คะแนนลดลงทุกวินาที ยิ่งยิงไว ยิ่งรวย!</li>
-                <li>🏹 **Real Aim:** ลากสายธนูเล็งเป้าหมายแล้วปล่อยเพื่อยิง</li>
-                <li>👑 **น้องจันเจ้า:** พลธนูตัวจริง พร้อมพิชิตมารยาเสพติด</li>
-            </ul>
+        <h1 class="text-5xl font-black mb-2 text-white drop-shadow-lg">Health Quest</h1>
+        <p class="text-xl mb-6 font-light tracking-widest text-yellow-200 uppercase">SUPER CHALLENGE MODE</p>
+        
+        <div class="panel-glass text-blue-900 p-8 rounded-[2.5rem] mb-8 max-w-sm w-full shadow-2xl text-center">
+            <label class="block text-sm font-bold text-gray-500 uppercase mb-2">ใส่ชื่อพลธนู (Nickname)</label>
+            <input type="text" id="user-nickname" placeholder="เช่น น้องจันเจ้า" maxlength="15" 
+                   class="w-full text-center text-2xl font-black p-3 rounded-2xl border-2 border-blue-200 focus:border-blue-500 outline-none text-blue-800 mb-6 shadow-inner bg-blue-50">
+            
+            <div class="text-left text-sm space-y-2 border-t pt-4 border-gray-100">
+                <div class="flex items-center"><span class="mr-2">⏱️</span> <b>เวลา:</b> 6 นาที (สุ่ม 20 ข้อ)</div>
+                <div class="flex items-center"><span class="mr-2">💰</span> <b>Score:</b> คะแนนลดลงทุกวินาที</div>
+                <div class="flex items-center"><span class="mr-2">🏆</span> <b>Leaderboard:</b> แสดง 5 อันดับแรก</div>
+            </div>
         </div>
-        <button id="btn-start" class="bg-yellow-400 text-blue-900 text-4xl font-black py-4 px-16 rounded-full shadow-[0_8px_0_0_#b8860b] active:translate-y-2 active:shadow-none transition-all hover:scale-105">START!</button>
+        
+        <button id="btn-start" class="bg-yellow-400 text-blue-900 text-3xl font-black py-4 px-16 rounded-full shadow-[0_8px_0_0_#b8860b] active:translate-y-2 active:shadow-none transition-all hover:scale-105">เริ่มภารกิจ!</button>
     </div>
 
     <!-- HUD -->
@@ -108,7 +104,7 @@
                     <span class="text-yellow-600 font-black text-xl ml-1 animate-pulse q-reward-val"><span id="potential-points">20</span></span>
                 </div>
             </div>
-            <h2 id="question-text" class="text-base md:text-lg font-bold text-blue-900 leading-tight mb-2">...</h2>
+            <h2 id="question-text" class="text-base md:text-lg font-bold text-blue-900 leading-tight mb-2 italic">...</h2>
             <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
                 <div id="q-timer-bar" class="h-full bg-red-500 transition-all duration-1000" style="width: 100%"></div>
             </div>
@@ -117,32 +113,29 @@
         <!-- Balloon Field -->
         <div id="balloon-area" class="absolute inset-0 z-20 pointer-events-none"></div>
 
-        <!-- Archer (Janjao Refined Position) -->
-        <div id="char-container" class="absolute bottom-4 left-1/2 md:left-[70%] -translate-x-1/2 z-30 flex flex-col items-center">
+        <!-- Archer: น้องจันเจ้า -->
+        <div id="char-container" class="absolute bottom-4 left-1/2 md:left-[72%] -translate-x-1/2 z-30 flex flex-col items-center">
             <div id="worm-spot" class="absolute -top-20 flex justify-center w-full"></div>
             
             <svg id="character" width="220" height="250" viewBox="0 0 220 250" style="overflow: visible;">
-                <!-- Hair (Ponytail Style) -->
+                <!-- Hair -->
                 <path d="M140,70 Q190,110 170,180" stroke="#724d31" stroke-width="24" stroke-linecap="round" fill="none" /> 
                 <circle cx="110" cy="75" r="45" fill="#724d31" /> 
-                
                 <!-- Face -->
                 <circle cx="110" cy="85" r="38" fill="#ffd5cc" /> 
                 <circle cx="96" cy="82" r="5" fill="#000" /> 
                 <circle cx="124" cy="82" r="5" fill="#000" />
                 <path d="M96,77 Q100,74 104,77 M120,77 Q124,74 128,77" stroke="#000" fill="none" /> 
                 <path id="mouth" d="M102,102 Q110,108 118,102" stroke="#000" stroke-width="1.5" fill="none" />
-                
                 <!-- Body -->
                 <rect x="85" y="118" width="50" height="55" rx="12" fill="#f87171" /> 
                 <rect x="85" y="165" width="50" height="30" rx="6" fill="#fb923c" /> 
-                
                 <rect x="92" y="195" width="12" height="20" fill="#ffd5cc" />
                 <rect x="116" y="195" width="12" height="20" fill="#ffd5cc" />
                 <rect x="88" y="215" width="20" height="10" rx="5" fill="#fff" /> 
                 <rect x="112" y="215" width="20" height="10" rx="5" fill="#fff" />
                 
-                <!-- Bow System: FIXED POSITION -->
+                <!-- Bow System -->
                 <g id="bow-group" transform="translate(110, 145)">
                     <path id="bow-wood" d="M-45,-65 Q-70,0 -45,65" stroke="#8B4513" stroke-width="9" fill="none" stroke-linecap="round" />
                     <path id="bow-string" d="M-45,-65 L-45,65" stroke="#fff" stroke-width="2.5" fill="none" />
@@ -154,45 +147,68 @@
 
         <div class="fixed bottom-4 left-4 z-50 scale-75 origin-bottom-left">
             <div id="coin-jar" class="relative w-28 h-36 bg-white/10 backdrop-blur border-b-8 border-x-2 border-white/30 rounded-b-3xl shadow-xl flex flex-wrap-reverse items-start p-1 overflow-hidden"></div>
-            <div class="text-center font-bold text-blue-900 text-[10px] mt-1 uppercase tracking-widest">WALLET</div>
+            <div class="text-center font-bold text-blue-900 text-[10px] mt-1 uppercase italic" id="player-label">PLAYER</div>
         </div>
         
         <div id="fx-layer" class="absolute inset-0 z-50 pointer-events-none"></div>
     </main>
 
-    <!-- Game Over Screen -->
+    <!-- Game Over Screen + Leaderboard -->
     <div id="game-over" class="fixed inset-0 z-[2000] flex items-center justify-center bg-blue-900/98 hidden p-6 text-center">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl max-w-md w-full border-t-8 border-pink-500">
-            <h1 id="result-title" class="text-3xl font-black text-blue-900 mb-6">MISSION COMPLETE!</h1>
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="bg-blue-50 p-6 rounded-2xl">
-                    <div class="text-gray-400 text-xs font-bold uppercase mb-1">ความแม่นยำ</div>
-                    <div id="result-correct" class="text-4xl font-black text-blue-600">0/20</div>
+        <div class="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full border-t-8 border-yellow-400 max-h-[90vh] overflow-y-auto">
+            <h1 id="result-title" class="text-2xl font-black text-blue-900 mb-4 uppercase">ภารกิจเสร็จสิ้น!</h1>
+            
+            <div class="grid grid-cols-2 gap-3 mb-6 text-center">
+                <div class="bg-blue-50 p-4 rounded-2xl">
+                    <div class="text-gray-400 text-[10px] font-bold uppercase mb-1">ความแม่นยำ</div>
+                    <div id="result-correct" class="text-2xl font-black text-blue-600">0/20</div>
                 </div>
-                <div class="bg-yellow-50 p-6 rounded-2xl">
-                    <div class="text-gray-400 text-xs font-bold uppercase mb-1">เหรียญทองรวม</div>
-                    <div id="result-coins" class="text-4xl font-black text-yellow-500">0</div>
+                <div class="bg-yellow-50 p-4 rounded-2xl">
+                    <div class="text-gray-400 text-[10px] font-bold uppercase mb-1">เหรียญทอง</div>
+                    <div id="result-coins" class="text-2xl font-black text-yellow-500">0</div>
                 </div>
             </div>
-            <p id="result-rank" class="text-lg font-bold mb-8 text-pink-500 italic">"กำลังจัดลำดับยศ..."</p>
-            <button onclick="location.reload()" class="bg-pink-500 text-white font-black py-5 px-12 rounded-full text-xl hover:bg-pink-600 w-full shadow-xl transition-transform active:scale-95">REPLAY</button>
+
+            <div class="mb-6">
+                <h3 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-widest flex items-center justify-center">
+                    <i class="fa-solid fa-crown text-yellow-500 mr-2"></i> Hall of Fame (Top 5)
+                </h3>
+                <div id="leaderboard-list" class="space-y-2">
+                    <div class="flex items-center justify-center py-4 text-gray-300 italic text-xs">กำลังโหลดสถิติ...</div>
+                </div>
+            </div>
+
+            <p id="result-rank" class="text-base font-bold mb-6 text-pink-500 italic">"จัดอันดับ..."</p>
+            <button id="btn-restart" class="bg-blue-600 text-white font-black py-4 px-12 rounded-full text-lg hover:bg-blue-700 w-full shadow-xl">เล่นใหม่อีกรอบ</button>
         </div>
     </div>
 
-    <script>
-        // --- 1. Master Pool of 60 Questions ---
+    <!-- Firebase & Game Engine Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global environment provided config
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'health-quest-leaderboard-v3';
+
+        // 60 Questions Database
         const masterPool = [
             { q: "ยาบ้า (Methamphetamine) ออกฤทธิ์แบบใดเป็นหลัก?", options: ["กดประสาท", "กระตุ้นประสาท", "หลอนประสาท", "ผสมผสาน"], correct: 1 },
             { q: "สุราและเครื่องดื่มแอลกอฮอล์ จัดอยู่ในประเภทใด?", options: ["กระตุ้นประสาท", "กดประสาท", "หลอนประสาท", "ผสมผสาน"], correct: 1 },
-            { q: "กัญชา (Marijuana) มีลักษณะการออกฤทธิ์แบบใด?", options: ["กดประสาท", "กระตุ้นประสาท", "หลอนประสาท", "ผสมผสาน (กด+กระตุ้น+หลอน)"], correct: 3 },
+            { q: "กัญชา มีลักษณะการออกฤทธิ์แบบใด?", options: ["กดประสาท", "กระตุ้นประสาท", "หลอนประสาท", "ผสมผสาน (กด+กระตุ้น+หลอน)"], correct: 3 },
             { q: "แอลเอสดี (LSD) ออกฤทธิ์แบบใด?", options: ["กดประสาท", "กระตุ้นประสาท", "หลอนประสาท", "บำรุงประสาท"], correct: 2 },
             { q: "ยาเค (Ketamine) ส่งผลต่อระบบประสาทอย่างไร?", options: ["ทำให้หลับลึก", "หลอนประสาทรุนแรง", "ทำให้ขยัน", "ช่วยแก้ไอ"], correct: 1 },
             { q: "มอร์ฟีนและเฮโรอีน ออกฤทธิ์แบบใด?", options: ["กดประสาทและระงับปวด", "กระตุ้น", "หลอนประสาท", "บำรุงหัวใจ"], correct: 0 },
             { q: "ยาอี หรือ ยาเลิฟ (Ecstasy) ออกฤทธิ์อย่างไร?", options: ["กดประสาท", "กระตุ้นและหลอนประสาท", "ทำให้ง่วง", "ระงับประสาท"], correct: 1 },
             { q: "เห็ดขี้ควาย จัดอยู่ในกลุ่มสารประเภทใด?", options: ["กดประสาท", "กระตุ้นประสาท", "หลอนประสาท", "บำรุงหัวใจ"], correct: 2 },
-            { q: "โคเคน (Cocaine) ส่งผลรุนแรงต่อหัวใจเพราะฤทธิ์ใด?", options: ["กดประสาท", "หลอนประสาท", "กระตุ้นประสาท", "ยับยั้งน้ำตาล"], correct: 2 },
+            { q: "โคเคน ส่งผลรุนแรงต่อหัวใจเพราะฤทธิ์ใด?", options: ["กดประสาท", "หลอนประสาท", "กระตุ้นประสาท", "ยับยั้งน้ำตาล"], correct: 2 },
             { q: "สารระเหย (กาว/ทินเนอร์) ออกฤทธิ์แบบใด?", options: ["กระตุ้นประสาท", "หลอนประสาท", "กดประสาท", "บำรุงความจำ"], correct: 2 },
-            { q: "สารเสพติดหมายถึงสิ่งใด?", options: ["อาหารเสริม", "ยา/สารเคมีส่งผลต่อกายและจิต", "สมุนไพร", "วิตามิน"], correct: 1 },
+            { q: "สารเสพติดหมายถึงสิ่งใด?", options: ["อาหารเสริม", "ยา/สารเคมีส่งผลต่อกายและจิต", "น้ำสมุนไพร", "วิตามิน"], correct: 1 },
             { q: "อาการ 'ลงแดง' คือลักษณะใด?", options: ["ตัวแดง", "ความดันสูง", "กระวนกระวายเมื่อขาดสาร", "หัวใจหยุดเต้น"], correct: 2 },
             { q: "วันงดสูบบุหรี่โลกตรงกับวันที่เท่าไหร่?", options: ["1 มกราคม", "31 พฤษภาคม", "12 สิงหาคม", "5 ธันวาคม"], correct: 1 },
             { q: "สาร 'ทาร์' ในบุหรี่ทำให้เกิดโรคใด?", options: ["เบาหวาน", "มะเร็งปอด", "ตับแข็ง", "ท้องร่วง"], correct: 1 },
@@ -216,7 +232,7 @@
             { q: "มอร์ฟีน สกัดมาจากพืชชนิดใด?", options: ["กัญชา", "ฝิ่น", "กระท่อม", "ยาสูบ"], correct: 1 },
             { q: "สารเสพติดประเภทที่ 4 คือกลุ่มใด?", options: ["ยาบ้า", "สารเคมีผลิตยา", "กัญชา", "เฮโรอีน"], correct: 1 },
             { q: "ยาอี ส่งผลเสียอย่างไร?", options: ["เรียนเก่ง", "ทำลายภูมิคุ้มกัน", "หลับดี", "แข็งแรง"], correct: 1 },
-            { q: "การให้กำลังใจผู้อื่นเลิกยา คือทักษะใด?", options: ["การตัดสินใจ", "การให้กำลังใจ", "การแก้ปัญหา", "การวิเคราะห์"], correct: 0 },
+            { q: "การให้กำลังใจผู้อื่นเลิกยา คือทักษะใด?", options: ["การสื่อสารและให้กำลังใจ", "การต่อสู้", "นิ่งเฉย", "ดุด่า"], correct: 0 },
             { q: "ความรับผิดชอบต่อสังคม คืออะไร?", options: ["ดูแลตัวเอง", "มีส่วนร่วมป้องกันภัยชุมชน", "หาเงิน", "เที่ยวเล่น"], correct: 1 },
             { q: "การกำหนดปัญหาที่แท้จริง อยู่ในขั้นตอนใด?", options: ["การให้รางวัล", "การตัดสินใจและแก้ปัญหา", "การเต้น", "การกิน"], correct: 1 },
             { q: "เมาแล้วขับ ถูกลงโทษอย่างไร?", options: ["ได้รางวัล", "คุมประพฤติ/บริการสังคม", "ห้ามออกบ้าน", "ไม่ผิด"], correct: 1 },
@@ -228,7 +244,7 @@
             { q: "หากเห็นเบาะแสยาเสพติดควรแจ้งใคร?", options: ["แจ้งตำรวจ/ครู", "เฉยๆ ไว้", "เข้าไปคุยกับคนขาย", "หนีออกจากบ้าน"], correct: 0 },
             { q: "การมีปมด้อยนำไปสู่การติดยาหรือไม่?", options: ["เป็นสาเหตุหนึ่งทางจิตวิทยา", "ไม่เกี่ยวเลย", "เฉพาะคนรวย", "เฉพาะเด็กเรียน"], correct: 0 },
             { q: "การสร้างภูมิคุ้มกันที่ดีที่สุดคืออะไร?", options: ["ออกกำลังกายสม่ำเสมอ", "การศึกษาโทษและมีทักษะชีวิต", "การไม่ไปโรงเรียน", "การกินอาหารแพงๆ"], correct: 1 },
-            { q: "กระท่อม (Kratom) ออกฤทธิ์แบบใด?", options: ["กระตุ้นประสาท", "กดประสาท", "หลอนประสาท", "บำรุงสมอง"], correct: 0 },
+            { q: "กระท่อม ออกฤทธิ์แบบใด?", options: ["กระตุ้นประสาท", "กดประสาท", "หลอนประสาท", "บำรุงสมอง"], correct: 0 },
             { q: "การดมกาวทำให้เกิดอะไร?", options: ["หัวใจแข็งแรง", "สมองฝ่อและเสียชีวิต", "ผิวสวย", "เรียนเก่ง"], correct: 1 },
             { q: "ยาเสพติดประเภทที่ 2 คือชนิดใด?", options: ["ชนิดร้ายแรง", "ชนิดให้โทษทั่วไป (มอร์ฟีน)", "ชนิดเคมี", "ชนิดพืช"], correct: 1 },
             { q: "บุหรี่ไฟฟ้ามีอันตรายหรือไม่?", options: ["ไม่มีเลย", "มีสารนิโคตินและสารเคมีอันตราย", "ปลอดภัยกว่าอากาศ", "ช่วยให้ปอดสะอาด"], correct: 1 },
@@ -244,9 +260,10 @@
             { q: "เมาแล้วขับ มีโทษสูงสุดคือ?", options: ["จำคุกและปรับ", "ตักเตือน", "ให้เงิน", "ไม่ลงโทษ"], correct: 0 }
         ];
 
-        // --- 2. Game Engine ---
-        let currentQIndex = 0, coins = 0, totalTime = 6 * 60, qTimeLeft = 20, balloons = [], unansweredIndices = [], isAiming = false, startAimPos = { x: 0, y: 0 }, currentAimPos = { x: 0, y: 0 }, timerInterval, totalTimerInterval;
-        let selectedQuestions = [];
+        // --- Game State Variables ---
+        let currentQIndex = 0, coins = 0, totalTime = 6 * 60, qTimeLeft = 20, balloons = [], unansweredIndices = [], isAiming = false, timerInterval, totalTimerInterval;
+        let startAimPos = { x: 0, y: 0 }, currentAimPos = { x: 0, y: 0 };
+        let selectedQuestions = [], nickname = "Anonymous";
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
@@ -258,9 +275,36 @@
             else if(type === 'fail') { o.type = 'sawtooth'; o.frequency.setValueAtTime(180, audioCtx.currentTime); g.gain.setValueAtTime(0.1, audioCtx.currentTime); o.start(); o.stop(audioCtx.currentTime + 0.3); }
         }
 
-        window.onload = function() {
-            document.getElementById('btn-start').onclick = startGame;
-        };
+        // --- Initialize App ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Rule 3: Auth Before Operations
+            const initAuth = async () => {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) { await signInAnonymously(auth); }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            };
+            await initAuth();
+
+            // Setup Listeners
+            const btnStart = document.getElementById('btn-start');
+            const nicknameInput = document.getElementById('user-nickname');
+            if(btnStart) {
+                btnStart.addEventListener('click', () => {
+                    const name = nicknameInput.value.trim();
+                    if (name.length < 2) {
+                        nicknameInput.classList.add('border-red-500', 'vibrate');
+                        setTimeout(() => nicknameInput.classList.remove('vibrate'), 500);
+                        return;
+                    }
+                    nickname = name;
+                    document.getElementById('player-label').innerText = nickname;
+                    startGame();
+                });
+            }
+            document.getElementById('btn-restart').addEventListener('click', () => location.reload());
+        });
 
         function startGame() {
             document.getElementById('start-screen').classList.add('hidden');
@@ -275,8 +319,9 @@
             totalTimerInterval = setInterval(() => {
                 totalTime--;
                 const m = Math.floor(totalTime / 60), s = totalTime % 60;
-                document.getElementById('total-timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                if(totalTime <= 0) endGame("ภารกิจล้มเหลว! (เวลาหมด)");
+                const display = document.getElementById('total-timer');
+                if(display) display.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                if(totalTime <= 0) endGame("ภารกิจล้มเหลว!");
             }, 1000);
         }
 
@@ -287,10 +332,11 @@
             document.getElementById('q-num').innerText = 20 - unansweredIndices.length + 1;
             document.getElementById('question-text').innerText = qData.q;
             document.getElementById('progress').innerText = `${20 - unansweredIndices.length}/20`;
-            qTimeLeft = 20; updatePointsDisplay();
+            qTimeLeft = 20; document.getElementById('potential-points').innerText = qTimeLeft;
             document.getElementById('q-timer-bar').style.width = '100%';
             timerInterval = setInterval(() => {
-                qTimeLeft--; updatePointsDisplay();
+                qTimeLeft--; 
+                document.getElementById('potential-points').innerText = Math.max(1, qTimeLeft);
                 document.getElementById('q-timer-bar').style.width = `${(qTimeLeft/20)*100}%`;
                 if(qTimeLeft <= 0) nextQuestion(true);
             }, 1000);
@@ -298,22 +344,18 @@
             document.getElementById('mouth').setAttribute('d', 'M102,102 Q110,108 118,102');
         }
 
-        function updatePointsDisplay() { document.getElementById('potential-points').innerText = Math.max(1, qTimeLeft); }
-
         function spawnBalloons(qData) {
             const area = document.getElementById('balloon-area'); area.innerHTML = ''; balloons = [];
             const colors = ['#ff4d4d', '#4d94ff', '#ffcc00', '#33cc33'], labels = ['ก', 'ข', 'ค', 'ง'];
             const w = window.innerWidth, h = window.innerHeight, isMobile = w < 768;
-            const areaTop = isMobile ? 140 : 120, areaLeft = isMobile ? 15 : 380;
+            const areaTop = isMobile ? 120 : 120, areaLeft = isMobile ? 15 : 380;
             qData.options.forEach((opt, i) => {
                 const b = document.createElement('div');
                 b.className = 'balloon absolute rounded-full shadow-2xl flex flex-col items-center justify-center p-2 text-white font-bold text-center border-b-[8px] border-black/10';
-                b.style.width = isMobile ? '60px' : '90px';
-                b.style.height = isMobile ? '80px' : '120px';
-                b.style.fontSize = isMobile ? '10px' : '14px';
-                b.style.backgroundColor = colors[i];
+                b.style.width = isMobile ? '65px' : '90px'; b.style.height = isMobile ? '85px' : '120px';
+                b.style.fontSize = isMobile ? '10px' : '14px'; b.style.backgroundColor = colors[i];
                 b.innerHTML = `<span class="opacity-60 text-[9px] mb-0.5">${labels[i]}</span><span>${opt}</span>`;
-                const state = { el: b, x: areaLeft + Math.random() * (w - areaLeft - 100), y: areaTop + Math.random() * (h/2.5), vx: (Math.random()-0.5)*1.3, vy: (Math.random()-0.5)*1.3, isCorrect: i === qData.correct };
+                const state = { el: b, x: areaLeft + Math.random() * (w - areaLeft - 100), y: areaTop + Math.random() * (h/2.8), vx: (Math.random()-0.5)*1.3, vy: (Math.random()-0.5)*1.3, isCorrect: i === qData.correct };
                 area.appendChild(b); balloons.push(state);
             });
         }
@@ -335,9 +377,7 @@
         }
         updatePhysics();
 
-        // FIXED Bow & Aiming System
-        const bowGroup = document.getElementById('bow-group'), bowString = document.getElementById('bow-string'), bowWood = document.getElementById('bow-wood'), arrowReady = document.getElementById('arrow-ready'), fxLayer = document.getElementById('fx-layer'), charContainer = document.getElementById('char-container');
-        
+        const bowGroup = document.getElementById('bow-group'), bowString = document.getElementById('bow-string'), bowWood = document.getElementById('bow-wood'), arrowReady = document.getElementById('arrow-ready'), fxLayer = document.getElementById('fx-layer');
         const handleStart = (e) => { 
             if(document.getElementById('game-container').classList.contains('hidden')) return;
             if(e.cancelable) e.preventDefault();
@@ -346,22 +386,16 @@
         const handleMove = (e) => { 
             if(!isAiming) return; if(e.cancelable) e.preventDefault();
             const t = e.touches ? e.touches[0] : e; currentAimPos = { x: t.clientX, y: t.clientY }; 
-            const dx = startAimPos.x - currentAimPos.x, dy = startAimPos.y - currentAimPos.y;
-            const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 100);
-            const angle = Math.atan2(dy, dx); 
-            // FIXED: Anchor position at translate(110, 145) to match Janjao's hands
+            const dx = startAimPos.x - currentAimPos.x, dy = startAimPos.y - currentAimPos.y, dist = Math.min(Math.sqrt(dx*dx + dy*dy), 100), angle = Math.atan2(dy, dx); 
             bowGroup.setAttribute('transform', `translate(110, 145) rotate(${angle * 180 / Math.PI})`); 
-            bowString.setAttribute('d', `M-45,-65 L${-45 - dist/2},0 L-45,65`); 
-            bowWood.setAttribute('d', `M-45,-65 Q${-70 - dist/4},0 -45,65`); 
-            arrowReady.setAttribute('x1', `${-45 - dist/2}`); arrowReady.setAttribute('x2', `${35 - dist/2}`); 
+            bowString.setAttribute('d', `M-45,-65 L${-45 - dist/2},0 L-45,65`); bowWood.setAttribute('d', `M-45,-65 Q${-70 - dist/4},0 -45,65`); arrowReady.setAttribute('x1', `${-45 - dist/2}`); arrowReady.setAttribute('x2', `${35 - dist/2}`); 
         };
         const handleEnd = (e) => { 
             if(!isAiming) return; isAiming = false; arrowReady.style.display = 'none'; 
             bowString.setAttribute('d', `M-45,-65 L-45,65`); bowWood.setAttribute('d', `M-45,-65 Q-70,0 -45,65`); 
             const dx = startAimPos.x - currentAimPos.x, dy = startAimPos.y - currentAimPos.y;
             const power = Math.min(Math.sqrt(dx*dx + dy*dy), 100) / 4.5;
-            const angle = Math.atan2(dy, dx);
-            if(power > 1.5) fireArrow(angle, power); 
+            const angle = Math.atan2(dy, dx); if(power > 1.5) fireArrow(angle, power); 
         };
 
         window.addEventListener('mousedown', handleStart); window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd);
@@ -383,10 +417,10 @@
             playSound('pop'); b.el.remove();
             if(b.isCorrect) {
                 const earned = Math.max(1, qTimeLeft); coins += earned; document.getElementById('coin-count').innerText = coins;
-                for(let i=0; i<Math.min(earned, 10); i++) { setTimeout(() => { playSound('coin'); addCoinToJar(); }, i*80); }
+                for(let i=0; i<Math.min(earned, 8); i++) { setTimeout(() => { playSound('coin'); addCoinToJar(); }, i*80); }
                 unansweredIndices.splice(currentQIndex, 1); currentQIndex = currentQIndex % unansweredIndices.length; setTimeout(loadQuestion, 800);
             } else {
-                playSound('fail'); document.getElementById('character').classList.add('vibrate'); setTimeout(() => document.getElementById('character').classList.remove('vibrate'), 500); 
+                playSound('fail'); const char = document.getElementById('character'); if(char) char.classList.add('vibrate'); setTimeout(() => { if(char) char.classList.remove('vibrate') }, 500); 
                 document.getElementById('mouth').setAttribute('d', 'M102,112 Q110,105 118,112');
                 const worm = document.createElement('div'); worm.className = 'text-5xl worm-drop absolute'; worm.innerText = '🐛'; document.getElementById('worm-spot').appendChild(worm); setTimeout(() => worm.remove(), 1000);
             }
@@ -395,17 +429,47 @@
 
         function addCoinToJar() { 
             const c = document.createElement('div'); c.className = 'w-3 h-3 md:w-4 md:h-4 bg-yellow-400 rounded-full border border-yellow-600 shadow-sm animate-bounce m-0.5'; 
-            const jar = document.getElementById('coin-jar'); if (jar) jar.appendChild(c); 
+            const jar = document.getElementById('coin-jar'); if(jar) jar.appendChild(c); 
+        }
+
+        async function endGame(t) { 
+            clearInterval(timerInterval); clearInterval(totalTimerInterval); 
+            document.getElementById('game-over').classList.remove('hidden'); 
+            document.getElementById('result-title').innerText = t; 
+            const s = 20 - unansweredIndices.length;
+            document.getElementById('result-correct').innerText = `${s}/20`; 
+            document.getElementById('result-coins').innerText = coins; 
+            
+            // Rule 1 & 3: Save to Firestore
+            const user = auth.currentUser;
+            if (user) {
+                const scoreRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                try { await addDoc(scoreRef, { name: nickname, coins: coins, correct: s, timestamp: Date.now() }); } catch(e) { console.error("Save Error", e); }
+                fetchLeaderboard();
+            }
+            let r = "พลธนูฝึกหัด"; if(coins > 320) r = "ราชินีธนูเทพเจ้า!"; else if(coins > 220) r = "มือฉมังปราบสารเสพติด"; else if(coins > 120) r = "พลธนูมือโปร"; 
+            document.getElementById('result-rank').innerText = `"${r}"`;
+        }
+
+        async function fetchLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            try {
+                // Rule 2: Simple query, memory sort
+                const q = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                const querySnapshot = await getDocs(q);
+                const data = []; querySnapshot.forEach(doc => data.push(doc.data()));
+                const top5 = data.sort((a, b) => b.coins - a.coins).slice(0, 5);
+                list.innerHTML = top5.map((e, i) => `
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 border-l-4 ${i === 0 ? 'border-yellow-400' : 'border-blue-300'} shadow-sm">
+                        <div class="flex items-center"><span class="w-6 font-black text-gray-400 text-xs">${i+1}.</span><span class="font-bold text-blue-800 text-sm">${e.name}</span></div>
+                        <div class="flex items-center font-black text-yellow-600 text-sm"><i class="fa-solid fa-coins text-[10px] mr-1"></i> ${e.coins}</div>
+                    </div>
+                `).join('');
+                if (top5.length === 0) list.innerHTML = `<div class="text-gray-300 text-xs py-4 italic">ยังไม่มีสถิติ...</div>`;
+            } catch (err) { list.innerHTML = `<div class="text-red-400 text-xs">Error loading hall of fame</div>`; }
         }
 
         function nextQuestion(timeout) { if(timeout) currentQIndex = (currentQIndex + 1) % unansweredIndices.length; loadQuestion(); }
-        
-        function endGame(t) { 
-            clearInterval(timerInterval); clearInterval(totalTimerInterval); document.getElementById('game-over').classList.remove('hidden'); 
-            document.getElementById('result-title').innerText = t; const s = 20 - unansweredIndices.length;
-            document.getElementById('result-correct').innerText = `${s}/20`; document.getElementById('result-coins').innerText = coins; 
-            let r = "พลธนูฝึกหัด"; if(coins > 320) r = "ราชินีธนูเทพเจ้า!"; else if(coins > 220) r = "มือฉมังปราบสารเสพติด"; else if(coins > 120) r = "พลธนูมือโปร"; document.getElementById('result-rank').innerText = `"${r}"`;
-        }
     </script>
 </body>
 </html>
